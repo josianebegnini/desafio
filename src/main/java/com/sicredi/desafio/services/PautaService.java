@@ -3,6 +3,8 @@ package com.sicredi.desafio.services;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.service.spi.ServiceException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.sicredi.desafio.models.Pauta;
@@ -13,27 +15,55 @@ public class PautaService {
 	private PautaRepository pautaRepo;
 	
     public PautaService(PautaRepository pautaRepo) {
-        this.pautaRepo = pautaRepo;
+    	this.pautaRepo = pautaRepo;
     }
 	public void criarPauta(Pauta pauta){
-		pautaRepo.save(pauta);
+		try {
+			pautaRepo.save(pauta);
+		} catch (DataAccessException e) {
+			throw new ServiceException("Erro ao criar Pauta: " + e.getMessage(), e);
+		}
     }
 	public List<Pauta> listarPautas(){
-        return pautaRepo.findAll();
+		try {
+			return pautaRepo.findAll();
+		} catch (DataAccessException e) {
+			throw new ServiceException("Erro ao listar Pautas: " + e.getMessage(), e);
+		}
     }
     public Optional<Pauta> buscarPorId(Long id){
-        return pautaRepo.findById(id);
+    	try {
+    		return pautaRepo.findById(id);
+    	} catch (DataAccessException e) {
+    		throw new ServiceException("Erro ao buscar Pauta por ID: " + e.getMessage(), e);
+    	}
     }
     public void atualizarPauta(Pauta pauta){
-    	pautaRepo.save(pauta);
+    	try {
+    		pautaRepo.save(pauta);
+    	} catch (DataAccessException e) {
+    		throw new ServiceException("Erro ao atualizar pauta: " + e.getMessage(), e);
+    	}
     }
     public void removerPautaPorId(Long id){
-    	pautaRepo.deleteById(id);
+    	try {
+    		pautaRepo.deleteById(id);
+    	} catch (DataAccessException e) {
+    		throw new ServiceException("Erro ao remover pauta por ID: " + e.getMessage(), e);
+    	}
     }
     public List<Pauta> buscarPorTitulo(String titulo){
-        return pautaRepo.findByTitulo(titulo);
+    	try {
+    		return pautaRepo.findByTitulo(titulo);
+    	} catch (DataAccessException e) {
+    		throw new ServiceException("Erro ao buscar pauta por titulo: " + e.getMessage(), e);
+    	}
     }
     public List<Pauta> buscarPautasAbertas(){
-    	return pautaRepo.findByFechada(false);
+    	try {
+    		return pautaRepo.findByFechada(false);
+    	} catch (DataAccessException e) {
+    		throw new ServiceException("Erro ao buscar pautas em aberto: " + e.getMessage(), e);
+    	}
     }
 }

@@ -1,5 +1,6 @@
 package com.sicredi.desafio.models;
 
+import java.time.LocalDateTime;
 import java.util.Date;
 
 import jakarta.persistence.Column;
@@ -16,7 +17,8 @@ public class Sessao {
 	private Long idSessao;
 	private String nome;
 	private String descricao;
-	private Date dtSessao;
+	private LocalDateTime dtSessao;
+	private LocalDateTime dtEncerramento;
 	private int duracao;
 	private boolean fechada;
 	
@@ -38,11 +40,11 @@ public class Sessao {
 	public void setDescricao(String descricao) {
 		this.descricao = descricao;
 	}
-	public Date getDtSessao() {
+	public LocalDateTime getDtSessao() {
 		return dtSessao;
 	}
-	public void setDtSessao(Date dtSessao) {
-		this.dtSessao = dtSessao;
+	public void setDtSessao(LocalDateTime localDateTime) {
+		this.dtSessao = localDateTime;
 	}
 	public int getDuracao() {
 		return duracao;
@@ -56,5 +58,10 @@ public class Sessao {
 	public void setFechada(boolean fechada) {
 		this.fechada = fechada;
 	}
-
+	public LocalDateTime getDtEncerramento() {
+		return dtEncerramento;
+	}
+	public void setDtEncerramento(LocalDateTime dtEncerramento) {
+		this.dtEncerramento = dtEncerramento;
+	}
 }

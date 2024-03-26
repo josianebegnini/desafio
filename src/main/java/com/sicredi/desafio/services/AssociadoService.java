@@ -3,6 +3,8 @@ package com.sicredi.desafio.services;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.service.spi.ServiceException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
 import com.sicredi.desafio.models.Associado;
@@ -16,21 +18,46 @@ public class AssociadoService {
         this.associadoRepo = associadoRepo;
     }
 	public void criarAssociado(Associado associado){
-		associadoRepo.save(associado);
+		try {
+			associadoRepo.save(associado);
+		} catch (DataAccessException e) {
+			throw new ServiceException("Erro ao criar associado: " + e.getMessage(), e);
+		}
     }
 	public List<Associado> listarAssociados(){
-        return associadoRepo.findAll();
+		try {
+			return associadoRepo.findAll();
+		} catch (DataAccessException e) {
+			throw new ServiceException("Erro ao listar associados: " + e.getMessage(), e);
+		}
     }
     public Optional<Associado> buscarPorId(Long id){
-        return associadoRepo.findById(id);
+    	try {
+    		return associadoRepo.findById(id);
+        } catch (DataAccessException e) {
+            throw new ServiceException("Erro ao buscar associado por ID: " + e.getMessage(), e);
+        }
+
     }
     public void atualizarAssociado(Associado associado){
-    	associadoRepo.save(associado);
+    	try {
+    		associadoRepo.save(associado);
+    	} catch (DataAccessException e) {
+    		throw new ServiceException("Erro ao atualizar associado: " + e.getMessage(), e);
+    	}
     }
     public void removerAssociadoPorId(Long id){
-    	associadoRepo.deleteById(id);
+    	try {
+    		associadoRepo.deleteById(id);
+    	} catch (DataAccessException e) {
+    		throw new ServiceException("Erro ao remover associado por ID: " + e.getMessage(), e);
+    	}
     }
     public List<Associado> buscarPorCpf(String cpf){
-        return associadoRepo.findByCpf(cpf);
+    	try {
+    		return associadoRepo.findByCpf(cpf);
+    	} catch (DataAccessException e) {
+    		throw new ServiceException("Erro ao buscar associado por CPF: " + e.getMessage(), e);
+    	}
     }
 }
