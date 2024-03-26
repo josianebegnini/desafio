@@ -3,7 +3,9 @@ package com.sicredi.desafio.controllers;
 import java.util.List;
 import java.util.Optional;
 
+import org.hibernate.service.spi.ServiceException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.sicredi.desafio.exceptions.VotacaoEncerradaException;
 import com.sicredi.desafio.models.ResultadoVotacao;
 import com.sicredi.desafio.models.Sessao;
 import com.sicredi.desafio.models.Votacao;
@@ -34,31 +37,46 @@ public class VotacaoRestController {
     }
 
     @PostMapping(value = "abrirSessaoVotacao", headers = "Accept=application/json")
-    public void abrirSessaoVotacao(@RequestBody Votacao votacao) {
-    	votacaoService.abrirSessaoVotacao(votacao);
+    public ResponseEntity<?> abrirSessaoVotacao(@RequestBody Votacao votacao) {
+        try {
+            votacaoService.abrirSessaoVotacao(votacao);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao abrir sessão de votação: " + e.getMessage());
+        }
     }
-    
     @PostMapping(value = "votar", headers = "Accept=application/json")
-    public void votar(@RequestBody Votacao votacao) {
-    	votacaoService.votar(votacao);
+    public ResponseEntity<?> votar(@RequestBody Votacao votacao) {
+    	 try {
+             votacaoService.votar(votacao);
+             return ResponseEntity.ok("Voto registrado com sucesso.");
+         } catch (VotacaoEncerradaException e) {
+             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+         } catch (ServiceException e) {
+             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao votar: " + e.getMessage());
+         }
     }
 
     @GetMapping("/contabilizar/{idSessao}")
-    public ResponseEntity<ResultadoVotacao> contabilizarVotacao(@PathVariable Long idSessao) {
-        Sessao sessao = sessaoService.buscarPorId(idSessao).orElse(null);
+    public  ResponseEntity<?> contabilizarVotacao(@PathVariable Long idSessao) {
+    	try {
+    		Sessao sessao = sessaoService.buscarPorId(idSessao).orElse(null);
 
-        if (sessao == null) {
-            return ResponseEntity.notFound().build();
-        }
+    		if (sessao == null) {
+    			return ResponseEntity.notFound().build();
+    		}
 
-//        if (!sessao.isFechada()) {
-//            return ResponseEntity.badRequest().body("A sessão de votação não está fechada.");
-//        }
+    		if (!sessao.isFechada()) {
+    			return ResponseEntity.badRequest().body("A sessão de votação não está fechada.");
+    		}
 
-        ResultadoVotacao resultado = votacaoService.contabilizar(sessao);
+    		ResultadoVotacao resultado = votacaoService.contabilizar(sessao);
 
-        // Retorna o resultado da votação
-        return ResponseEntity.ok(resultado);
+    		return ResponseEntity.ok(resultado);
+    	} catch (ServiceException e) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao contabilizar votos: " + e.getMessage());
+    	}
+        
     }
 
     

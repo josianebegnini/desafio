@@ -17,7 +17,7 @@ public class Votacao {
     @Column(name = "idVotacao")
 	private Long idVotacao;
 	private Date dtVoto;
-	private boolean votoSim;
+	private String voto;
 	
 	@ManyToOne
     @JoinColumn(name = "sessao_id")
@@ -71,12 +71,12 @@ public class Votacao {
 		this.idVotacao = idVotacao;
 	}
 
-	public boolean isVotoSim() {
-		return votoSim;
+	public String getVoto() {
+		return voto;
 	}
 
-	public void setVotoSim(boolean votoSim) {
-		this.votoSim = votoSim;
+	public void setVoto(String voto) {
+		this.voto = voto;
 	}
-	
+
 }

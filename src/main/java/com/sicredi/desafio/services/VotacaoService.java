@@ -1,5 +1,6 @@
 package com.sicredi.desafio.services;
 
+import java.text.Normalizer;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -9,6 +10,7 @@ import org.hibernate.service.spi.ServiceException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import com.sicredi.desafio.exceptions.VotacaoEncerradaException;
 import com.sicredi.desafio.models.Pauta;
 import com.sicredi.desafio.models.ResultadoVotacao;
 import com.sicredi.desafio.models.Sessao;
@@ -64,42 +66,42 @@ public class VotacaoService {
     				sessao.setFechada(true);
     				sessao.setDtEncerramento(agora);
     				sessaoService.atualizarSessao(sessao);
-    				//avisa que a sessao de votacao foi encerrada
+    				throw new VotacaoEncerradaException();
     			}else {
     				votacaoRepo.save(votacao);
     			}
     		}else {
-    			//avisa que a sessao de votacao foi encerrada
+    			throw new VotacaoEncerradaException();
     		}
     	} catch (DataAccessException e) {
     		throw new ServiceException("Erro ao votar: " + e.getMessage(), e);
     	}
-
-    
     }
     
-    public ResultadoVotacao contabilizar(Sessao s) {
+    public ResultadoVotacao contabilizar(Sessao sessao) {
     	try {
-    		ResultadoVotacao resultado = new ResultadoVotacao();
-    		Sessao sessao = sessaoService.buscarPorId(s.getIdSessao()).get();
-    		if(sessao != null && sessao.isFechada()) {
-    			//    		resultado.setTotalPositivo(obterVotosComSimPorSessao(sessao).size());
-    			//    		resultado.setTotalNegativo(obterVotosComNaoPorSessao(sessao).size());
-    		}
-    		return resultado;
+    	 List<Votacao> votos = votacaoRepo.findBySessaoIdSessao(sessao.getIdSessao());
+    	 ResultadoVotacao resultado = new ResultadoVotacao();
+    	 int contagemVotosSim = 0;
+    	 int contagemVotosNao = 0;
+
+    	 for (Votacao votacao : votos) {
+    		 String votoNormalizado = Normalizer.normalize(votacao.getVoto(), Normalizer.Form.NFD)
+    			        .replaceAll("\\p{M}", "");
+    	     if ("sim".equalsIgnoreCase(votacao.getVoto())) {
+    	         contagemVotosSim++;
+    	     }
+    	     if ("nao".equalsIgnoreCase(votoNormalizado)) {
+    	    	 contagemVotosNao++;
+    	     }
+    	 }
+    	 resultado.setTotalNegativo(contagemVotosNao);
+    	 resultado.setTotalPositivo(contagemVotosSim);
+    	 return resultado;
     	} catch (DataAccessException e) {
-    		throw new ServiceException("Erro ao contabilizar votacao: " + e.getMessage(), e);
-    	}
+			throw new ServiceException("Erro ao buscar votos sim: " + e.getMessage(), e);
+		}
     }
-    
-//    public List<Votacao> obterVotosComSimPorSessao(Sessao sessao) {
-////        return votacaoRepo.findBySessaoAndVotoSim(sessao);
-//    }
-//    
-//    public List<Votacao> obterVotosComNaoPorSessao() {
-//    
-////    	return votacaoRepo.findBySessaoAndVotoSim(sessao);
-//    }
     
 	public List<Votacao> listarVotacoes(){
 		try {
