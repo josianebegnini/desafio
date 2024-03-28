@@ -8,7 +8,9 @@ import java.util.Optional;
 
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
 import com.sicredi.desafio.exceptions.VotacaoEncerradaException;
 import com.sicredi.desafio.models.Pauta;
@@ -23,11 +25,25 @@ public class VotacaoService {
 	private PautaService pautaService;
 	private SessaoService sessaoService;
 	
+	private final String USER_INFO_URL = "https://user-info.herokuapp.com/users/";
 	
     public VotacaoService(VotacaoRepository votacaoRepo, PautaService pautaService, SessaoService sessaoService) {
         this.votacaoRepo = votacaoRepo;
         this.pautaService = pautaService;
         this.sessaoService = sessaoService;
+    }
+    
+    public String verificaPermissaoAssociado(String cpf) {
+        String url = USER_INFO_URL + cpf;
+        
+        RestTemplate restTemplate = new RestTemplate();
+        ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
+        
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return response.getBody();
+        } else {
+            throw new RuntimeException("Erro ao chamar o serviço: " + response.getStatusCode());
+        }
     }
     
     public void abrirSessaoVotacao(Votacao votacao) {
@@ -56,6 +72,10 @@ public class VotacaoService {
     	try {
     		//buscar se o usuario possui permissao para votar servico externo
 
+    		if(votacao.getAssociado()!=null && votacao.getAssociado().getCpf()!=null) {
+    			String podeVotar = verificaPermissaoAssociado(votacao.getAssociado().getCpf());
+    			System.out.println(podeVotar);
+    		}
     		if(votacao.getSessao() != null && !votacao.getSessao().isFechada()) {
     			Sessao sessao =  votacao.getSessao();
     			LocalDateTime dataVotacao = sessao.getDtSessao();
@@ -99,7 +119,7 @@ public class VotacaoService {
     	 resultado.setTotalPositivo(contagemVotosSim);
     	 return resultado;
     	} catch (DataAccessException e) {
-			throw new ServiceException("Erro ao buscar votos sim: " + e.getMessage(), e);
+			throw new ServiceException("Erro ao contabilizar os votos: " + e.getMessage(), e);
 		}
     }
     

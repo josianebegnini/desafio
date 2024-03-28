@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -26,14 +28,19 @@ public class AssociadoRestController {
         this.associadoService = associadoService;
     }
 
-    @PostMapping(value = "criar", headers = "Accept=application/json")
-    public void criarAssociado(@RequestBody Associado associado) {
-    	associadoService.criarAssociado(associado);
+    @PostMapping(value = "cadastrar", headers = "Accept=application/json")
+    public ResponseEntity<Object> criarAssociado(@RequestBody Associado associado) {
+    	try {	
+    		associadoService.criarAssociado(associado);
+    		return ResponseEntity.ok().build();
+    	} catch (Exception e) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar associado: " + e.getMessage());
+    	}
     }
 
     @GetMapping(value = "listar", headers = "Accept=application/json")
     public List<Associado> listarAssociados() {
-        return associadoService.listarAssociados();
+    	return associadoService.listarAssociados();
     }
     
     @GetMapping(value = "listarPorId/{id}", headers = "Accept=application/json")
@@ -42,13 +49,23 @@ public class AssociadoRestController {
     }
 
     @PutMapping(value = "atualizar", headers = "Accept=application/json")
-    public void atualizarAssociado(@RequestBody Associado associado) {
-    	associadoService.atualizarAssociado(associado);
+    public ResponseEntity<Object> atualizarAssociado(@RequestBody Associado associado) {
+    	try {
+    		associadoService.atualizarAssociado(associado);
+    		return ResponseEntity.ok().build();
+    	} catch (Exception e) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao atualizar associado: " + e.getMessage());
+    	}
     }
 
     @DeleteMapping(value = "remover/{id}", headers = "Accept=application/json")
-    public void removerAssociado(@PathVariable Long id) {
-    	associadoService.removerAssociadoPorId(id);
+    public ResponseEntity<Object> removerAssociado(@PathVariable Long id) {
+    	try {
+    		associadoService.removerAssociadoPorId(id);
+    		return ResponseEntity.ok().build();
+    	} catch (Exception e) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao remover associado: " + e.getMessage());
+    	}
     }
 
     @GetMapping(value = "listarPorCpf/{cpf}", headers = "Accept=application/json")

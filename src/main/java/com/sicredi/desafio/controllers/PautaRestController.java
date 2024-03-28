@@ -27,7 +27,7 @@ public class PautaRestController {
         this.pautaService = pautaService;
     }
 
-    @PostMapping(value = "criar", headers = "Accept=application/json")
+    @PostMapping(value = "cadastrar", headers = "Accept=application/json")
     public void criarPauta(@RequestBody Pauta pauta) {
     	pautaService.criarPauta(pauta);
     }

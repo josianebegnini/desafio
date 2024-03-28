@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -27,11 +29,15 @@ public class SessaoRestController {
         this.sessaoService = sessaoService;
     }
 
-    @PostMapping(value = "criar", headers = "Accept=application/json")
-    public void criarSessao(@RequestBody Sessao sessao) {
-    	sessaoService.criarSessao(sessao);
+    @PostMapping(value = "abrirSessao", headers = "Accept=application/json")
+    public ResponseEntity<String> criarSessao(@RequestBody Sessao sessao) {
+    	try {
+    		sessaoService.criarSessao(sessao);
+    		return ResponseEntity.ok("Sessao criada com sucesso.");
+    	} catch (Exception e) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar sessão: " + e.getMessage());
+    	}
     }
-
     @GetMapping(value = "listar", headers = "Accept=application/json")
     public List<Sessao> listarSessoes() {
         return sessaoService.listarSessoes();
@@ -43,13 +49,23 @@ public class SessaoRestController {
     }
 
     @PutMapping(value = "atualizar", headers = "Accept=application/json")
-    public void atualizarSessao(@RequestBody Sessao sessao) {
-    	sessaoService.atualizarSessao(sessao);
+    public ResponseEntity<String> atualizarSessao(@RequestBody Sessao sessao) {
+    	try {
+    		sessaoService.atualizarSessao(sessao);
+    		return ResponseEntity.ok("Sessao atualizada com sucesso.");
+    	} catch (Exception e) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao atualizar sessão: " + e.getMessage());
+    	}
     }
 
     @DeleteMapping(value = "remover/{id}", headers = "Accept=application/json")
-    public void removerSessao(@PathVariable Long id) {
-    	sessaoService.removerSessaoPorId(id);
+    public ResponseEntity<String> removerSessao(@PathVariable Long id) {
+    	try {
+    		sessaoService.removerSessaoPorId(id);
+    		return ResponseEntity.ok("Sessao removida com sucesso.");
+    	} catch (Exception e) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao remover sessão: " + e.getMessage());
+    	}
     }
 
     @GetMapping(value = "listarAbertas", headers = "Accept=application/json")

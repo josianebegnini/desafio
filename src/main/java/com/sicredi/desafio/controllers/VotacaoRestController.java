@@ -36,15 +36,6 @@ public class VotacaoRestController {
         this.sessaoService = sessaoService;
     }
 
-    @PostMapping(value = "abrirSessaoVotacao", headers = "Accept=application/json")
-    public ResponseEntity<?> abrirSessaoVotacao(@RequestBody Votacao votacao) {
-        try {
-            votacaoService.abrirSessaoVotacao(votacao);
-            return ResponseEntity.ok().build();
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao abrir sessão de votação: " + e.getMessage());
-        }
-    }
     @PostMapping(value = "votar", headers = "Accept=application/json")
     public ResponseEntity<?> votar(@RequestBody Votacao votacao) {
     	 try {

@@ -1,13 +1,14 @@
 package com.sicredi.desafio.models;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 
 @Entity
 public class Sessao {
@@ -21,6 +22,10 @@ public class Sessao {
 	private LocalDateTime dtEncerramento;
 	private int duracao;
 	private boolean fechada;
+
+	@ManyToOne
+	@JoinColumn(name = "pauta_id")
+	private Pauta pauta;
 	
 	public Long getIdSessao() {
 		return idSessao;
@@ -64,4 +69,11 @@ public class Sessao {
 	public void setDtEncerramento(LocalDateTime dtEncerramento) {
 		this.dtEncerramento = dtEncerramento;
 	}
+	public Pauta getPauta() {
+		return pauta;
+	}
+	public void setPauta(Pauta pauta) {
+		this.pauta = pauta;
+	}
+	
 }
