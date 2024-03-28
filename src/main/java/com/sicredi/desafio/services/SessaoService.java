@@ -21,7 +21,7 @@ public class SessaoService {
 	public ResponseEntity<Object> criarSessao(Sessao sessao){
 		try {
 			if(sessao.getDuracao()<=0) {
-				sessao.setDuracao(2);
+				sessao.setDuracao(1);
 			}
 			sessao.setFechada(false);
 			sessaoRepo.save(sessao);
