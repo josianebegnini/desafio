@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import com.sicredi.desafio.models.Pauta;
@@ -17,11 +18,12 @@ public class PautaService {
     public PautaService(PautaRepository pautaRepo) {
     	this.pautaRepo = pautaRepo;
     }
-	public void criarPauta(Pauta pauta){
+	public ResponseEntity<Object> criarPauta(Pauta pauta){
 		try {
 			pautaRepo.save(pauta);
+			return ResponseEntity.ok().build();
 		} catch (DataAccessException e) {
-			throw new ServiceException("Erro ao criar Pauta: " + e.getMessage(), e);
+			throw new ServiceException("Erro ao cadastrar Pauta: " + e.getMessage(), e);
 		}
     }
 	public List<Pauta> listarPautas(){

@@ -3,6 +3,7 @@ package com.sicredi.desafio.models;
 public class ResultadoVotacao {
 	private int totalPositivo;
 	private int totalNegativo;
+	private Long sessaoId;
 	public int getTotalPositivo() {
 		return totalPositivo;
 	}
@@ -15,5 +16,10 @@ public class ResultadoVotacao {
 	public void setTotalNegativo(int totalNegativo) {
 		this.totalNegativo = totalNegativo;
 	}
-
+	public Long getSessaoId() {
+		return sessaoId;
+	}
+	public void setSessaoId(Long sessaoId) {
+		this.sessaoId = sessaoId;
+	}
 }

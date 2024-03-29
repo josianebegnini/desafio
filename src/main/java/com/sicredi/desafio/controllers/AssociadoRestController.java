@@ -1,5 +1,6 @@
 package com.sicredi.desafio.controllers;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,8 +69,8 @@ public class AssociadoRestController {
     	}
     }
 
-    @GetMapping(value = "listarPorCpf/{cpf}", headers = "Accept=application/json")
-    public List<Associado> listarPorCpf(@PathVariable String cpf) {
+    @GetMapping(value = "buscarPorCpf/{cpf}", headers = "Accept=application/json")
+    public Associado buscarPorCpf(@PathVariable String cpf) {
         return associadoService.buscarPorCpf(cpf);
     }
 }

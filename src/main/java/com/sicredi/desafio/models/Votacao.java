@@ -24,10 +24,6 @@ public class Votacao {
     private Sessao sessao;
 	
 	@ManyToOne
-	@JoinColumn(name = "pauta_id")
-	private Pauta pauta;
-	
-	@ManyToOne
 	@JoinColumn(name = "cpf")
 	private Associado associado;
 	
@@ -45,14 +41,6 @@ public class Votacao {
 
 	public void setSessao(Sessao sessao) {
 		this.sessao = sessao;
-	}
-
-	public Pauta getPauta() {
-		return pauta;
-	}
-
-	public void setPauta(Pauta pauta) {
-		this.pauta = pauta;
 	}
 
 	public Associado getAssociado() {

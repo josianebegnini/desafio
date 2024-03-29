@@ -23,10 +23,10 @@ import com.sicredi.desafio.models.Votacao;
 import com.sicredi.desafio.services.SessaoService;
 import com.sicredi.desafio.services.VotacaoService;
 
-
 @RestController
 @RequestMapping("/api/votacao/")
 public class VotacaoRestController {
+
     private VotacaoService votacaoService;
     private SessaoService sessaoService;
 
@@ -38,14 +38,17 @@ public class VotacaoRestController {
 
     @PostMapping(value = "votar", headers = "Accept=application/json")
     public ResponseEntity<?> votar(@RequestBody Votacao votacao) {
-    	 try {
-             votacaoService.votar(votacao);
-             return ResponseEntity.ok("Voto registrado com sucesso.");
-         } catch (VotacaoEncerradaException e) {
-             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-         } catch (ServiceException e) {
-             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao votar: " + e.getMessage());
-         }
+    	try {
+    		votacaoService.votar(votacao);
+    		return ResponseEntity.ok("Voto registrado com sucesso.");
+    	} catch (VotacaoEncerradaException ve) {
+    		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
+    	} catch (ServiceException se) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao votar: " + se.getMessage());
+    	} catch (Exception e) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao votar: " + e.getMessage());
+
+    	}	
     }
 
     @GetMapping("/contabilizar/{idSessao}")
@@ -56,20 +59,16 @@ public class VotacaoRestController {
     		if (sessao == null) {
     			return ResponseEntity.notFound().build();
     		}
-
-    		if (!sessao.isFechada()) {
-    			return ResponseEntity.badRequest().body("A sessão de votação não está fechada.");
-    		}
-
     		ResultadoVotacao resultado = votacaoService.contabilizar(sessao);
-
-    		return ResponseEntity.ok(resultado);
-    	} catch (ServiceException e) {
+    		return ResponseEntity.ok("Sessão de votação encerrada para contabilização. Resultado postado na fila queue-resultado-votacao. " + resultado);
+    	} catch (ServiceException se) {
+    		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao contabilizar votos: " + se.getMessage());
+    	} catch (Exception e) {
     		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao contabilizar votos: " + e.getMessage());
     	}
         
     }
-
+    
     
     @GetMapping(value = "listar", headers = "Accept=application/json")
     public List<Votacao> listarVotacoes() {

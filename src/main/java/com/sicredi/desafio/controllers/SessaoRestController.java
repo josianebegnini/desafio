@@ -30,10 +30,10 @@ public class SessaoRestController {
     }
 
     @PostMapping(value = "abrirSessao", headers = "Accept=application/json")
-    public ResponseEntity<String> criarSessao(@RequestBody Sessao sessao) {
+    public ResponseEntity<String> abrirSessao(@RequestBody Sessao sessao) {
     	try {
-    		sessaoService.criarSessao(sessao);
-    		return ResponseEntity.ok("Sessao criada com sucesso.");
+    		sessaoService.abrirSessaoVotacao(sessao);
+    		return ResponseEntity.ok("Sessao aberta com sucesso.");
     	} catch (Exception e) {
     		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao criar sessão: " + e.getMessage());
     	}

@@ -1,5 +1,6 @@
 package com.sicredi.desafio.services;
 
+import java.text.Normalizer;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,9 @@ public class AssociadoService {
     }
 	public void criarAssociado(Associado associado){
 		try {
+			String cpfNormalizado = Normalizer.normalize(associado.getCpf(), Normalizer.Form.NFD)
+    				.replaceAll("\\p{M}", "");
+    		associado.setCpf(cpfNormalizado);
 			associadoRepo.save(associado);
 		} catch (DataAccessException e) {
 			throw new ServiceException("Erro ao criar associado: " + e.getMessage(), e);
@@ -53,9 +57,9 @@ public class AssociadoService {
     		throw new ServiceException("Erro ao remover associado por ID: " + e.getMessage(), e);
     	}
     }
-    public List<Associado> buscarPorCpf(String cpf){
+    public Associado buscarPorCpf(String cpf){
     	try {
-    		return associadoRepo.findByCpf(cpf);
+    		return associadoRepo.findByCpf(cpf).get(0);
     	} catch (DataAccessException e) {
     		throw new ServiceException("Erro ao buscar associado por CPF: " + e.getMessage(), e);
     	}
