@@ -10,12 +10,14 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.HttpStatusCodeException;
 import org.springframework.web.client.RestTemplate;
 
 import com.google.gson.Gson;
-import com.sicredi.desafio.exceptions.VotacaoEncerradaException;
+import com.sicredi.desafio.exceptions.VotacaoException;
 import com.sicredi.desafio.models.Associado;
 import com.sicredi.desafio.models.ResultadoVotacao;
 import com.sicredi.desafio.models.Sessao;
@@ -52,13 +54,17 @@ public class VotacaoService {
     				return true;
     			}
     			return false;
-    		} catch (Exception e) {
-    			logger.error("Erro ao chamar o serviço de validação de associado: " + e);
-    			throw new Exception("Erro ao chamar o serviço de validação de associado: " + e);
-    		}
+    		} catch (HttpStatusCodeException ex) {
+    			 if (ex.getStatusCode()== HttpStatus.NOT_FOUND)
+    				 logger.info("Serviço externo retornou CPF inválido: " + ex);
+    	             throw new VotacaoException("CPF Inválido!");
+	    	} catch (Exception e) {
+	    		logger.error("Erro ao chamar o serviço de validação de associado: " + e);
+	    		throw new Exception("Erro ao chamar o serviço de validação de associado: " + e);
+	    	}
     	}else {
         	logger.error("CPF não informado na votação");
-    		throw new VotacaoEncerradaException("CPF inválido");
+    		throw new VotacaoException("CPF inválido");
     	}
     }
     public boolean associadoJaVotou(Votacao votacao) throws Exception {
@@ -69,7 +75,7 @@ public class VotacaoService {
 			}
 			return false;
     	}else {
-    		throw new VotacaoEncerradaException("CPF inválido");
+    		throw new VotacaoException("CPF inválido");
     	}
     }
     
@@ -79,12 +85,12 @@ public class VotacaoService {
     			Optional<Sessao> sessao = sessaoService.buscarPorId(votacao.getSessao().getIdSessao());
     			if(sessao==null) {
     				logger.error("Sessão não encontrada");
-    				throw new VotacaoEncerradaException("Sessão não encontrada");
+    				throw new VotacaoException("Sessão não encontrada");
     			}
     			try {
     				if(!associadoPossuiPermissaoParaVotar(votacao)) {
     					logger.info("Associado nao possui permissão para votar");
-    					throw new VotacaoEncerradaException("Associado nao possui permissão para votar");
+    					throw new VotacaoException("Associado nao possui permissão para votar");
     				}
     			} catch (Exception e) {
     				logger.info("Serviço de validação de permissão de voto externo retornou erro. "
@@ -96,11 +102,11 @@ public class VotacaoService {
     				Associado associado = associadoService.buscarPorCpf(votacao.getAssociado().getCpf());
     				if(associado==null) {
     					logger.info("Associado não possui permissão de voto, pois não esta cadastrado");
-    					throw new VotacaoEncerradaException("Associado não possui permissão de voto, pois não esta cadastrado");
+    					throw new VotacaoException("Associado não possui permissão de voto, pois não esta cadastrado");
     				}
     				if(associadoJaVotou(votacao)) {
     					logger.info("Associado já votou na sessão");
-    					throw new VotacaoEncerradaException("Associado já votou na sessão");
+    					throw new VotacaoException("Associado já votou na sessão");
     				}
     				
     				votacao.setAssociado(associado);
@@ -108,7 +114,7 @@ public class VotacaoService {
     			}
     		}else {
     			logger.info("A votação está encerrada.");
-    			throw new VotacaoEncerradaException("A votação está encerrada.");
+    			throw new VotacaoException("A votação está encerrada.");
     		}
     	} catch (DataAccessException e) {
     		throw new ServiceException("Erro ao votar: " + e.getMessage(), e);
@@ -179,7 +185,7 @@ public class VotacaoService {
 		Optional<Sessao> sessao = sessaoService.buscarPorId(s.getIdSessao());
 		if(sessao==null) {
 			logger.error("Sessão não encontrada");
-			throw new VotacaoEncerradaException("Sessão não encontrada");
+			throw new VotacaoException("Sessão não encontrada");
 		}
 		encerrarSessao(sessao);
 		logger.info("Sessão de votação encerrada para contagem de votos");

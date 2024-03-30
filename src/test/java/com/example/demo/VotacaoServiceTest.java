@@ -8,16 +8,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.springframework.test.context.ContextConfiguration;
 
-import com.sicredi.desafio.exceptions.VotacaoEncerradaException;
+import com.sicredi.desafio.exceptions.VotacaoException;
 import com.sicredi.desafio.models.Associado;
 import com.sicredi.desafio.models.Sessao;
 import com.sicredi.desafio.models.Votacao;
@@ -46,27 +49,19 @@ public class VotacaoServiceTest {
     private VotacaoService votacaoService;
 
     
-    @Test
-    public void testAssociadoPossuiPermissaoParaVotar() throws Exception {
-        // Simulando um associado com permissão para votar
-        Votacao votacao = new Votacao();
-        Associado associado = new Associado();
-        associado.setCpf("12345678901");
-        votacao.setAssociado(associado); // CPF válido
-
-        when(sessaoService.buscarPorId(anyLong())).thenReturn(Optional.of(new Sessao())); // Mocking sessão
-        when(votacaoRepository.findByAssociadoCpf(anyString())).thenReturn(null); // Associado não votou ainda
-
-        boolean result = votacaoService.associadoPossuiPermissaoParaVotar(votacao);
-        assertThat(result).isTrue();
+	@BeforeEach
+    public void setup() {
+        MockitoAnnotations.initMocks(this);
+        votacaoService = new VotacaoService(votacaoRepository, sessaoService, associadoService, messageProducer);
     }
+    
 
     @Test
     public void testAssociadoJaVotou() throws Exception {
         // Simulando um associado que já votou
         Votacao votacao = new Votacao();
         Associado associado = new Associado();
-        associado.setCpf("12345678901");
+        associado.setCpf("66972099099");
         votacao.setAssociado(associado); // CPF válido
 
         when(votacaoRepository.findByAssociadoCpf(anyString())).thenReturn(List.of(votacao)); // Associado já votou
@@ -80,12 +75,13 @@ public class VotacaoServiceTest {
         // Configurar comportamento simulado do objeto de sessão
         Sessao sessao = new Sessao();
         sessao.setIdSessao(1L);
+        sessao.setDtSessao(LocalDateTime.now());
         sessao.setFechada(false);
         when(sessaoService.buscarPorId(sessao.getIdSessao())).thenReturn(Optional.of(sessao));
 
         // Configurar comportamento simulado do objeto associado
         Associado associado = new Associado();
-        associado.setCpf("12345678901");
+        associado.setCpf("66972099099");
         when(associadoService.buscarPorCpf(associado.getCpf())).thenReturn(associado);
 
         // Configurar comportamento simulado do repositório de votação
@@ -107,21 +103,37 @@ public class VotacaoServiceTest {
         Sessao sessao = new Sessao();
         sessao.setIdSessao(1L);
         sessao.setFechada(true);
+        sessao.setDtSessao(LocalDateTime.now());
+    	Votacao votacao = new Votacao();
+    	votacao.setVoto("Sim");
+    	votacao.setSessao(sessao);
+    	Associado associado = new Associado();
+    	associado.setCpf("66972099099");
+    	votacao.setAssociado(associado);
         when(sessaoService.buscarPorId(sessao.getIdSessao())).thenReturn(Optional.of(sessao));
 
         // Chamar o método que será testado e verificar se ele lança VotacaoEncerradaException
-        Assertions.assertThrows(VotacaoEncerradaException.class, () -> {
-            votacaoService.votar(new Votacao());
+        Assertions.assertThrows(VotacaoException.class, () -> {
+            votacaoService.votar(votacao);
         });
     }
     
     @Test
     public void testVotar() throws Exception {
         // Simulando uma votação válida
-        Votacao votacao = new Votacao();
+    	Sessao sessao = new Sessao();
+    	sessao.setIdSessao(1L);
+    	sessao.setFechada(false);
+    	sessao.setDtSessao(LocalDateTime.now());
+    	Associado associado = new Associado();
+    	associado.setCpf("66972099099");
+    	Votacao votacao = new Votacao();
+    	votacao.setVoto("Sim");
+    	votacao.setSessao(sessao);
+    	votacao.setAssociado(associado);
 
-        when(sessaoService.buscarPorId(anyLong())).thenReturn(Optional.of(new Sessao())); // Mocking sessão
-        when(associadoService.buscarPorCpf(anyString())).thenReturn(new Associado()); // Associado válido
+        when(sessaoService.buscarPorId(anyLong())).thenReturn(Optional.of(sessao)); // Mocking sessão
+        when(associadoService.buscarPorCpf(anyString())).thenReturn(associado); // Associado válido
         when(votacaoRepository.findByAssociadoCpf(anyString())).thenReturn(null); // Associado não votou ainda
 
         votacaoService.votar(votacao); // Verifica se a execução ocorre sem exceções

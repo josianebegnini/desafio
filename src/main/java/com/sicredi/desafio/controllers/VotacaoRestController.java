@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.sicredi.desafio.exceptions.VotacaoEncerradaException;
+import com.sicredi.desafio.exceptions.VotacaoException;
 import com.sicredi.desafio.models.ResultadoVotacao;
 import com.sicredi.desafio.models.Sessao;
 import com.sicredi.desafio.models.Votacao;
@@ -41,7 +41,7 @@ public class VotacaoRestController {
     	try {
     		votacaoService.votar(votacao);
     		return ResponseEntity.ok("Voto registrado com sucesso.");
-    	} catch (VotacaoEncerradaException ve) {
+    	} catch (VotacaoException ve) {
     		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ve.getMessage());
     	} catch (ServiceException se) {
     		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao votar: " + se.getMessage());
