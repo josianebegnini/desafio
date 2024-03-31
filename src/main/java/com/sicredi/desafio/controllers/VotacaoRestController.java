@@ -23,6 +23,8 @@ import com.sicredi.desafio.models.Votacao;
 import com.sicredi.desafio.services.SessaoService;
 import com.sicredi.desafio.services.VotacaoService;
 
+import io.swagger.v3.oas.annotations.Operation;
+
 @RestController
 @RequestMapping("/api/votacao/")
 public class VotacaoRestController {
@@ -35,7 +37,7 @@ public class VotacaoRestController {
         this.votacaoService = votacaoService;
         this.sessaoService = sessaoService;
     }
-
+    @Operation(summary = "Votar na sessão")
     @PostMapping(value = "votar", headers = "Accept=application/json")
     public ResponseEntity<?> votar(@RequestBody Votacao votacao) {
     	try {
