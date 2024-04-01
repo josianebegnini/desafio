@@ -28,7 +28,7 @@ Receber votos dos associados em pautas (os votos são apenas 'Sim'/'Não'. Cada 
   "nome": "Associado Um"
 }
 
-- POST endpoint /api/votacao/votar
+- POST /api/votacao/votar
 {
   "dtVoto": "2024-03-27T10:00:00Z",
   "voto": "SIM",
