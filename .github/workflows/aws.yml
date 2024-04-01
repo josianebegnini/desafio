@@ -32,7 +32,7 @@ on:
 
 env:
   AWS_REGION: us-east-1                   # set this to your preferred AWS region, e.g. us-west-1
-  ECR_REPOSITORY: 211125629593.dkr.ecr.us-east-1.amazonaws.com/desafio           # set this to your Amazon ECR repository name
+  ECR_REPOSITORY: 211125629593.dkr.ecr.us-east-1.amazonaws.com/rabbitmq           # set this to your Amazon ECR repository name
   ECS_SERVICE: arn:aws:ecs:us-east-1:211125629593:service/desafio/servico-backend                 # set this to your Amazon ECS service name
   ECS_CLUSTER: arn:aws:ecs:us-east-1:211125629593:cluster/desafio                 # set this to your Amazon ECS cluster name
   ECS_TASK_DEFINITION: arn:aws:ecs:us-east-1:211125629593:task/desafio/287cb6de369a40878869cb5fcb28aa0d # set this to the path to your Amazon ECS task definition
