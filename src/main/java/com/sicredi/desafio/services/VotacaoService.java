@@ -178,7 +178,12 @@ public class VotacaoService {
 
 	private void enviaMensagemParaFila(ResultadoVotacao resultado) throws Exception {
 		String mensagem = montaMensagem(resultado);
-		producer.sendMessage(mensagem);
+		try {
+			producer.sendMessage(mensagem);
+			
+		} catch (Exception e) {
+			logger.error("erro ao postar na fila", e);
+		}
 	}
 
 	private Optional<Sessao> encerraSessaoParaContagemDeVotos(Sessao s) {
