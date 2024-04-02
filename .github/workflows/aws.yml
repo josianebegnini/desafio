@@ -6,7 +6,7 @@ on:
 
 env:
   ECR_BACKEND_IMAGE: teste
-  AWS_DEFAULT_REGION: ${{ vars.AWS_DEFAULT_REGION }}
+  AWS_DEFAULT_REGION: us-east-1
   ECS_CLUSTER: desafio
   ECS_BACKEND_SERVICE: servico-backend
 jobs:
