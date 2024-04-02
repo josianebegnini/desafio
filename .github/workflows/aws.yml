@@ -10,7 +10,7 @@ env:
   ECR_REPOSITORY: desafio           # set this to your Amazon ECR repository name
   ECS_SERVICE: servico-backend                 # set this to your Amazon ECS service name
   ECS_CLUSTER: desafio                 # set this to your Amazon ECS cluster name
-  ECS_TASK_DEFINITION: 2c945df5dec348688f54e3e5828a8fd9 # set this to the path to your Amazon ECS task definition
+  ECS_TASK_DEFINITION: arn:aws:ecs:us-east-1:211125629593:task/desafio/2c945df5dec348688f54e3e5828a8fd9 # set this to the path to your Amazon ECS task definition
                                                # file, e.g. .aws/task-definition.json
   CONTAINER_NAME: rabbitmq           # set this to the name of the container in the
                                                # containerDefinitions section of your task definition
