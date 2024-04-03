@@ -1,6 +1,5 @@
 package com.sicredi.desafio.controllers;
 
-import java.text.Normalizer;
 import java.util.List;
 import java.util.Optional;
 

@@ -29,16 +29,16 @@ public class VotacaoService {
 	private VotacaoRepository votacaoRepo;
 	private SessaoService sessaoService;
 	private AssociadoService associadoService;
-	private MessageProducer producer;
+	private RabbitMQService rabbitMQService;
 
     private static final Logger logger = LogManager.getLogger(VotacaoService.class);
 	private final String SERVICO_EXETERNO_URL = "https://user-info.herokuapp.com/users/";
 	
-    public VotacaoService(VotacaoRepository votacaoRepo, SessaoService sessaoService, AssociadoService associadoService, MessageProducer producer) {
+    public VotacaoService(VotacaoRepository votacaoRepo, SessaoService sessaoService, AssociadoService associadoService, RabbitMQService rabbitMQService) {
         this.votacaoRepo = votacaoRepo;
         this.sessaoService = sessaoService;
         this.associadoService = associadoService;
-        this.producer = producer;
+        this.rabbitMQService = rabbitMQService;
     }
     
     public boolean associadoPossuiPermissaoParaVotar(Votacao votacao) throws Exception {
@@ -140,8 +140,10 @@ public class VotacaoService {
 		sessaoService.atualizarSessao(sessao.get());
 	}
     
-	public ResultadoVotacao contabilizar(Sessao s) throws Exception {
+	public String contabilizar(Sessao s) throws Exception {
+		
 		ResultadoVotacao resultado = new ResultadoVotacao();
+		String mensagem = null;
 		try {
 			Optional<Sessao> sessao = encerraSessaoParaContagemDeVotos(s);
 			
@@ -163,29 +165,27 @@ public class VotacaoService {
 			resultado.setTotalNegativo(contagemVotosNao);
 			resultado.setTotalPositivo(contagemVotosSim);
 			resultado.setSessaoId(sessao.get().getIdSessao());
-		
-			enviaMensagemParaFila(resultado);
+			mensagem = montaMensagem(resultado);
+			rabbitMQService.enviaMensagem("resultado-votacao", mensagem);
 			
-			return resultado;
+			return mensagem;
 		} catch (DataAccessException de) {
 			logger.error("Erro ao contabilizar os votos: " + de.getMessage(), de);
 			throw new ServiceException("Erro ao contabilizar os votos: " + de.getMessage(), de);
 		}catch (Exception e) {
 			logger.error("Erro ao contabilizar os votos: " + e.getMessage(), e);
 		}
-		return resultado;
+		return mensagem;
 	}
 
-	private void enviaMensagemParaFila(ResultadoVotacao resultado) throws Exception {
-		String mensagem = montaMensagem(resultado);
-		try {
-			producer.sendMessage(mensagem);
-			
-		} catch (Exception e) {
-			logger.error("erro ao postar na fila", e);
-		}
+	private String montaMensagem(ResultadoVotacao resultado) {
+		Gson gson = new Gson();
+		String json = gson.toJson(resultado);
+		logger.info("Mensagem JSON gerada: {}", json);
+		return json;
 	}
-
+	
+	
 	private Optional<Sessao> encerraSessaoParaContagemDeVotos(Sessao s) {
 		Optional<Sessao> sessao = sessaoService.buscarPorId(s.getIdSessao());
 		if(sessao==null) {
@@ -195,12 +195,6 @@ public class VotacaoService {
 		encerrarSessao(sessao);
 		logger.info("Sessão de votação encerrada para contagem de votos");
 		return sessao;
-	}
-	private String montaMensagem(ResultadoVotacao resultado) {
-		Gson gson = new Gson();
-		String json = gson.toJson(resultado);
-		logger.info("Mensagem JSON gerada: {}", json);
-		return json;
 	}
 	
 	public List<Votacao> listarVotacoes(){

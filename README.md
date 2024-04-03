@@ -46,4 +46,4 @@ Receber votos dos associados em pautas (os votos são apenas 'Sim'/'Não'. Cada 
 
 Contabilizar votos
 - GET /api/votacao/contabilizar/1
-  O serviço de contabilização irá postar uma mensagem na exchange-desafio
+  O serviço de contabilização irá postar uma mensagem na fila resultado-votacao
