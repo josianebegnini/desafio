@@ -26,7 +26,7 @@ import com.sicredi.desafio.models.Sessao;
 import com.sicredi.desafio.models.Votacao;
 import com.sicredi.desafio.repositories.VotacaoRepository;
 import com.sicredi.desafio.services.AssociadoService;
-import com.sicredi.desafio.services.MessageProducer;
+import com.sicredi.desafio.services.RabbitMQService;
 import com.sicredi.desafio.services.SessaoService;
 import com.sicredi.desafio.services.VotacaoService;
 
@@ -41,9 +41,9 @@ public class VotacaoServiceTest {
 
     @Mock
     private AssociadoService associadoService;
-
+    
     @Mock
-    private MessageProducer messageProducer;
+    private RabbitMQService rabbitMQService;
 
     @InjectMocks
     private VotacaoService votacaoService;
@@ -52,7 +52,7 @@ public class VotacaoServiceTest {
 	@BeforeEach
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        votacaoService = new VotacaoService(votacaoRepository, sessaoService, associadoService, messageProducer);
+        votacaoService = new VotacaoService(votacaoRepository, sessaoService, associadoService, rabbitMQService);
     }
     
 

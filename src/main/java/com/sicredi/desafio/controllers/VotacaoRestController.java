@@ -20,6 +20,7 @@ import com.sicredi.desafio.exceptions.VotacaoException;
 import com.sicredi.desafio.models.ResultadoVotacao;
 import com.sicredi.desafio.models.Sessao;
 import com.sicredi.desafio.models.Votacao;
+import com.sicredi.desafio.services.RabbitMQService;
 import com.sicredi.desafio.services.SessaoService;
 import com.sicredi.desafio.services.VotacaoService;
 
@@ -37,6 +38,7 @@ public class VotacaoRestController {
         this.votacaoService = votacaoService;
         this.sessaoService = sessaoService;
     }
+    
     @Operation(summary = "Votar na sessão")
     @PostMapping(value = "votar", headers = "Accept=application/json")
     public ResponseEntity<?> votar(@RequestBody Votacao votacao) {
@@ -61,8 +63,9 @@ public class VotacaoRestController {
     		if (sessao == null) {
     			return ResponseEntity.notFound().build();
     		}
-    		ResultadoVotacao resultado = votacaoService.contabilizar(sessao);
-    		return ResponseEntity.ok("Sessão de votação encerrada para contabilização. Resultado postado na fila queue-resultado-votacao. " + resultado);
+    		String resultado = votacaoService.contabilizar(sessao);
+    		
+    		return ResponseEntity.ok("Sessão de votação encerrada para contabilização. Resultado postado na fila resultado-votacao. " + resultado);
     	} catch (ServiceException se) {
     		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Erro ao contabilizar votos: " + se.getMessage());
     	} catch (Exception e) {
