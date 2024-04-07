@@ -17,10 +17,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.sicredi.desafio.exceptions.VotacaoException;
-import com.sicredi.desafio.models.ResultadoVotacao;
 import com.sicredi.desafio.models.Sessao;
 import com.sicredi.desafio.models.Votacao;
-import com.sicredi.desafio.services.RabbitMQService;
+import com.sicredi.desafio.services.ContabilizaService;
 import com.sicredi.desafio.services.SessaoService;
 import com.sicredi.desafio.services.VotacaoService;
 
@@ -32,11 +31,13 @@ public class VotacaoRestController {
 
     private VotacaoService votacaoService;
     private SessaoService sessaoService;
+    private ContabilizaService contabilizarService;
 
     @Autowired
-    public VotacaoRestController(VotacaoService votacaoService, SessaoService sessaoService) {
+    public VotacaoRestController(VotacaoService votacaoService, SessaoService sessaoService, ContabilizaService contabilizarService) {
         this.votacaoService = votacaoService;
         this.sessaoService = sessaoService;
+        this.contabilizarService = contabilizarService;
     }
     
     @Operation(summary = "Votar na sessão")
@@ -63,7 +64,7 @@ public class VotacaoRestController {
     		if (sessao == null) {
     			return ResponseEntity.notFound().build();
     		}
-    		String resultado = votacaoService.contabilizar(sessao);
+    		String resultado = contabilizarService.contabilizar(sessao);
     		
     		return ResponseEntity.ok("Sessão de votação encerrada para contabilização. Resultado postado na fila resultado-votacao. " + resultado);
     	} catch (ServiceException se) {
