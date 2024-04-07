@@ -25,7 +25,7 @@ public class SessaoService {
     
     public void abrirSessaoVotacao(Sessao sessao) {
     	try {
-    		if(sessao.getPauta( )!= null && sessao != null) {
+    		if(sessao.getPauta( )!= null) {
     			Pauta pauta = sessao.getPauta();
     			pauta.setFechada(true);
     			pautaService.atualizarPauta(pauta);

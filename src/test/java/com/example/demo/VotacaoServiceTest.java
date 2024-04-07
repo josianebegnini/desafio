@@ -25,6 +25,7 @@ import com.sicredi.desafio.models.Associado;
 import com.sicredi.desafio.models.Sessao;
 import com.sicredi.desafio.models.Votacao;
 import com.sicredi.desafio.repositories.VotacaoRepository;
+import com.sicredi.desafio.services.AssociadoExternoService;
 import com.sicredi.desafio.services.AssociadoService;
 import com.sicredi.desafio.services.RabbitMQService;
 import com.sicredi.desafio.services.SessaoService;
@@ -41,6 +42,9 @@ public class VotacaoServiceTest {
 
     @Mock
     private AssociadoService associadoService;
+
+    @Mock
+    private AssociadoExternoService associadoExternoService;
     
     @Mock
     private RabbitMQService rabbitMQService;
@@ -52,7 +56,7 @@ public class VotacaoServiceTest {
 	@BeforeEach
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        votacaoService = new VotacaoService(votacaoRepository, sessaoService, associadoService, rabbitMQService);
+        votacaoService = new VotacaoService(votacaoRepository, sessaoService, associadoService, associadoExternoService);
     }
     
 
@@ -66,7 +70,7 @@ public class VotacaoServiceTest {
 
         when(votacaoRepository.findByAssociadoCpf(anyString())).thenReturn(List.of(votacao)); // Associado já votou
 
-        boolean result = votacaoService.associadoJaVotou(votacao);
+        boolean result = votacaoService.validaAssociadoJaVotou(votacao);
         assertThat(result).isTrue();
     }
 

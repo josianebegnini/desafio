@@ -29,51 +29,25 @@ public class VotacaoService {
 	private VotacaoRepository votacaoRepo;
 	private SessaoService sessaoService;
 	private AssociadoService associadoService;
-	private RabbitMQService rabbitMQService;
+	private AssociadoExternoService associadoExternoService;
 
     private static final Logger logger = LogManager.getLogger(VotacaoService.class);
-	private final String SERVICO_EXETERNO_URL = "https://user-info.herokuapp.com/users/";
 	
-    public VotacaoService(VotacaoRepository votacaoRepo, SessaoService sessaoService, AssociadoService associadoService, RabbitMQService rabbitMQService) {
+    public VotacaoService(VotacaoRepository votacaoRepo, SessaoService sessaoService, AssociadoService associadoService, AssociadoExternoService associadoExternoService) {
         this.votacaoRepo = votacaoRepo;
         this.sessaoService = sessaoService;
         this.associadoService = associadoService;
-        this.rabbitMQService = rabbitMQService;
+        this.associadoExternoService = associadoExternoService;
     }
     
-    public boolean associadoPossuiPermissaoParaVotar(Votacao votacao) throws Exception {
-    	if(votacao.getAssociado()!=null && votacao.getAssociado().getCpf()!=null) {
-    		String cpfNormalizado = Normalizer.normalize(votacao.getAssociado().getCpf(), Normalizer.Form.NFD)
-    				.replaceAll("\\p{M}", "");
-    		String url = SERVICO_EXETERNO_URL + cpfNormalizado;
-    		try {
-    			RestTemplate restTemplate = new RestTemplate();
-    			ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);
-
-    			if(response.getBody().equals("ABLE_TO_VOTE")) {
-    				return true;
-    			}
-    			return false;
-    		} catch (HttpStatusCodeException ex) {
-    			 if (ex.getStatusCode()== HttpStatus.NOT_FOUND)
-    				 logger.info("Serviço externo retornou CPF inválido: " + ex);
-    	             throw new VotacaoException("CPF Inválido!");
-	    	} catch (Exception e) {
-	    		logger.error("Erro ao chamar o serviço de validação de associado: " + e);
-	    		throw new Exception("Erro ao chamar o serviço de validação de associado: " + e);
-	    	}
-    	}else {
-        	logger.error("CPF não informado na votação");
-    		throw new VotacaoException("CPF inválido");
-    	}
-    }
-    public boolean associadoJaVotou(Votacao votacao) throws Exception {
+    public boolean validaAssociadoJaVotou(Votacao votacao) throws Exception {
     	if(votacao.getAssociado()!=null && votacao.getAssociado().getCpf()!=null) {
     		List<Votacao> associado = votacaoRepo.findByAssociadoCpf(votacao.getAssociado().getCpf());
 			if(associado!=null && !associado.isEmpty()) {
 				return true;
 			}
-			return false;
+			logger.info("Associado já votou na sessão");
+			throw new VotacaoException("Associado já votou na sessão");
     	}else {
     		throw new VotacaoException("CPF inválido");
     	}
@@ -81,45 +55,63 @@ public class VotacaoService {
     
     public void votar(Votacao votacao) throws Exception {
     	try {
-    		if(votacao.getSessao() != null && !votacao.getSessao().isFechada()) {
-    			Optional<Sessao> sessao = sessaoService.buscarPorId(votacao.getSessao().getIdSessao());
-    			if(sessao==null) {
-    				logger.error("Sessão não encontrada");
-    				throw new VotacaoException("Sessão não encontrada");
-    			}
-    			try {
-    				if(!associadoPossuiPermissaoParaVotar(votacao)) {
-    					logger.info("Associado nao possui permissão para votar");
-    					throw new VotacaoException("Associado nao possui permissão para votar");
-    				}
-    			} catch (Exception e) {
-    				logger.info("Serviço de validação de permissão de voto externo retornou erro. "
-    						+ "Alterado modo de validação pra encontrar se associado é cadastrado no serviço interno.");
-    				
-    			}
+    		
+    		validaVotacaoEncerrada(votacao);
+    		
+			Optional<Sessao> sessao = buscaSessao(votacao);
+    		chamaServicoExternoUsuarioPossuiPermissaoVotar(votacao);
     			
     			if(!tempoDaSessaoExpirou(sessao)) {
-    				Associado associado = associadoService.buscarPorCpf(votacao.getAssociado().getCpf());
-    				if(associado==null) {
-    					logger.info("Associado não possui permissão de voto, pois não esta cadastrado");
-    					throw new VotacaoException("Associado não possui permissão de voto, pois não esta cadastrado");
-    				}
-    				if(associadoJaVotou(votacao)) {
-    					logger.info("Associado já votou na sessão");
-    					throw new VotacaoException("Associado já votou na sessão");
-    				}
+    				Associado associado = validaAssociadoEhCadastrado(votacao);
+    				validaAssociadoJaVotou(votacao);
+    				
+    			
     				
     				votacao.setAssociado(associado);
     				votacaoRepo.save(votacao);
     			}
-    		}else {
-    			logger.info("A votação está encerrada.");
-    			throw new VotacaoException("A votação está encerrada.");
-    		}
     	} catch (DataAccessException e) {
     		throw new ServiceException("Erro ao votar: " + e.getMessage(), e);
     	}
     }
+
+	private Associado validaAssociadoEhCadastrado(Votacao votacao) {
+		Associado associado = associadoService.buscarPorCpf(votacao.getAssociado().getCpf());
+		if(associado==null) {
+			logger.info("Associado não possui permissão de voto, pois não esta cadastrado");
+			throw new VotacaoException("Associado não possui permissão de voto, pois não esta cadastrado");
+		}
+		return associado;
+	}
+
+	private void chamaServicoExternoUsuarioPossuiPermissaoVotar(Votacao votacao) {
+		try {
+			boolean resultado = associadoExternoService.chamaServicoExternoAssociadoPossuiPermissaoParaVotar(votacao);
+			if(!resultado) {
+				logger.info("Associado nao possui permissão para votar");
+				throw new VotacaoException("Associado nao possui permissão para votar");
+			}
+		} catch (Exception e) {
+			logger.info("Não foi possível validar associado no serviço externo, serviço pode estar fora.");
+			
+		}
+	}
+
+	private void validaVotacaoEncerrada(Votacao votacao) {
+		if(votacao.getSessao() != null && votacao.getSessao().isFechada()) {
+			logger.info("A votação está encerrada.");
+			throw new VotacaoException("A votação está encerrada.");
+		}
+	}
+
+	private Optional<Sessao> buscaSessao(Votacao votacao) {
+		Optional<Sessao> sessao = sessaoService.buscarPorId(votacao.getSessao().getIdSessao());
+		if(sessao==null) {
+			logger.error("Sessão não encontrada");
+			throw new VotacaoException("Sessão não encontrada");
+		}
+		return sessao;
+	}
 
 	private boolean tempoDaSessaoExpirou(Optional<Sessao> sessao) {
 		LocalDateTime dataVotacao = sessao.get().getDtSessao();
@@ -127,75 +119,25 @@ public class VotacaoService {
 		LocalDateTime agora = LocalDateTime.now();
 		long diferencaMinutos = Duration.between(agora, dataVotacao).toMinutes();
 		if (diferencaMinutos > tempoLimiteMinutos) {
-			encerrarSessao(sessao);
+			encerrarSessao(sessao.get());
 			logger.info("Sessão expirou e foi encerrada");
 			return true;
 		}
 		return false;
 	}
 
-	private void encerrarSessao(Optional<Sessao> sessao) {
+	public void encerrarSessao(Sessao sessaoVotacao) {
+		Optional<Sessao> sessao = sessaoService.buscarPorId(sessaoVotacao.getIdSessao());
+		if(sessao==null) {
+			logger.error("Sessão não encontrada");
+			throw new VotacaoException("Sessão não encontrada");
+		}
+
 		sessao.get().setFechada(true);
 		sessao.get().setDtEncerramento(LocalDateTime.now());
 		sessaoService.atualizarSessao(sessao.get());
 	}
     
-	public String contabilizar(Sessao s) throws Exception {
-		
-		ResultadoVotacao resultado = new ResultadoVotacao();
-		String mensagem = null;
-		try {
-			Optional<Sessao> sessao = encerraSessaoParaContagemDeVotos(s);
-			
-			List<Votacao> votos = votacaoRepo.findBySessaoIdSessao(s.getIdSessao());
-			int contagemVotosSim = 0;
-			int contagemVotosNao = 0;
-
-			for (Votacao votacao : votos) {
-				String votoNormalizado = Normalizer.normalize(votacao.getVoto(), Normalizer.Form.NFD)
-						.replaceAll("\\p{M}", "");
-				if ("sim".equalsIgnoreCase(votacao.getVoto())) {
-					contagemVotosSim++;
-				}
-				if ("nao".equalsIgnoreCase(votoNormalizado)) {
-					contagemVotosNao++;
-				}
-			}
-			
-			resultado.setTotalNegativo(contagemVotosNao);
-			resultado.setTotalPositivo(contagemVotosSim);
-			resultado.setSessaoId(sessao.get().getIdSessao());
-			mensagem = montaMensagem(resultado);
-			rabbitMQService.enviaMensagem("resultado-votacao", mensagem);
-			
-			return mensagem;
-		} catch (DataAccessException de) {
-			logger.error("Erro ao contabilizar os votos: " + de.getMessage(), de);
-			throw new ServiceException("Erro ao contabilizar os votos: " + de.getMessage(), de);
-		}catch (Exception e) {
-			logger.error("Erro ao contabilizar os votos: " + e.getMessage(), e);
-		}
-		return mensagem;
-	}
-
-	private String montaMensagem(ResultadoVotacao resultado) {
-		Gson gson = new Gson();
-		String json = gson.toJson(resultado);
-		logger.info("Mensagem JSON gerada: {}", json);
-		return json;
-	}
-	
-	
-	private Optional<Sessao> encerraSessaoParaContagemDeVotos(Sessao s) {
-		Optional<Sessao> sessao = sessaoService.buscarPorId(s.getIdSessao());
-		if(sessao==null) {
-			logger.error("Sessão não encontrada");
-			throw new VotacaoException("Sessão não encontrada");
-		}
-		encerrarSessao(sessao);
-		logger.info("Sessão de votação encerrada para contagem de votos");
-		return sessao;
-	}
 	
 	public List<Votacao> listarVotacoes(){
 		try {
