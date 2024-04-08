@@ -7,6 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.service.spi.ServiceException;
 import org.springframework.dao.DataAccessException;
+import org.springframework.stereotype.Service;
 
 import com.google.gson.Gson;
 import com.sicredi.desafio.models.ResultadoVotacao;
@@ -14,6 +15,7 @@ import com.sicredi.desafio.models.Sessao;
 import com.sicredi.desafio.models.Votacao;
 import com.sicredi.desafio.repositories.VotacaoRepository;
 
+@Service
 public class ContabilizaService {
 	private VotacaoRepository votacaoRepo;
 	private RabbitMQService rabbitMQService;
