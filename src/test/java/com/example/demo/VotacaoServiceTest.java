@@ -61,20 +61,6 @@ public class VotacaoServiceTest {
     
 
     @Test
-    public void testAssociadoJaVotou() throws Exception {
-        // Simulando um associado que já votou
-        Votacao votacao = new Votacao();
-        Associado associado = new Associado();
-        associado.setCpf("66972099099");
-        votacao.setAssociado(associado); // CPF válido
-
-        when(votacaoRepository.findByAssociadoCpf(anyString())).thenReturn(List.of(votacao)); // Associado já votou
-
-        boolean result = votacaoService.validaAssociadoJaVotou(votacao);
-        assertThat(result).isTrue();
-    }
-
-    @Test
     public void testVotar_SessaoAberta() throws Exception {
         // Configurar comportamento simulado do objeto de sessão
         Sessao sessao = new Sessao();

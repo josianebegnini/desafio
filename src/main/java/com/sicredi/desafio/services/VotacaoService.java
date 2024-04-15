@@ -40,14 +40,14 @@ public class VotacaoService {
         this.associadoExternoService = associadoExternoService;
     }
     
-    public boolean validaAssociadoJaVotou(Votacao votacao) throws Exception {
+    public void validaAssociadoJaVotou(Votacao votacao) throws Exception {
     	if(votacao.getAssociado()!=null && votacao.getAssociado().getCpf()!=null) {
     		List<Votacao> associado = votacaoRepo.findByAssociadoCpf(votacao.getAssociado().getCpf());
+    		
 			if(associado!=null && !associado.isEmpty()) {
-				return true;
+				logger.info("Associado já votou na sessão: " + associado.get(0).getAssociado().getCpf());
+				throw new VotacaoException("Associado já votou na sessão");
 			}
-			logger.info("Associado já votou na sessão");
-			throw new VotacaoException("Associado já votou na sessão");
     	}else {
     		throw new VotacaoException("CPF inválido");
     	}
@@ -64,8 +64,6 @@ public class VotacaoService {
     			if(!tempoDaSessaoExpirou(sessao)) {
     				Associado associado = validaAssociadoEhCadastrado(votacao);
     				validaAssociadoJaVotou(votacao);
-    				
-    			
     				
     				votacao.setAssociado(associado);
     				votacaoRepo.save(votacao);
